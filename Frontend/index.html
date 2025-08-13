@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Project MARS – Maritime Activity Recognition</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="landingPage" class="landing-container">
+    <div class="landing-content">
+      <h1>Project MARS</h1>
+      <p class="tagline">Maritime Activity Recognition from Satellites</p>
+      <p class="description">
+        Leverage cutting-edge AI to analyze satellite video feeds. Upload imagery to automatically detect, track, and classify maritime vessels, identifying potential 'dark ships' operating without AIS transponders.
+      </p>
+      <button id="startButton" class="start-btn">Launch Control Center &rarr;</button>
+    </div>
+  </div>
+
+  <div id="controlCenter" class="container hidden">
+    <div class="control-panel">
+      <h2><i class="fas fa-satellite-dish"></i> Control Center</h2>
+
+      <input type="file" id="fileInput" accept="video/*" hidden>
+      <button class="action-btn" onclick="document.getElementById('fileInput').click()">
+          <i class="fas fa-upload"></i> Upload Satellite Video
+      </button>
+      <button class="action-btn" id="analyzeBtn" disabled>
+          <i class="fas fa-cogs"></i> Analyze
+      </button>
+
+      <div class="results" id="resultsPanel">
+        <div class="vessel">
+          <span>Waiting for input...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-panel" id="mapPanel">
+        <i class="fas fa-map-marked-alt" style="font-size: 4rem; margin-bottom: 1rem;"></i>
+        <p>Awaiting Analysis</p>
+        <small>Detections will be overlaid on the map here</small>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
