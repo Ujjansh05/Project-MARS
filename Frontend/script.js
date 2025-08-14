@@ -39,29 +39,40 @@ analyzeBtn.addEventListener("click", async () => {
   mapPanel.innerHTML = '<i class="fas fa-spinner fa-spin" style="font-size: 3rem;"></i><p style="margin-top: 1rem;">Running model, please wait...</p>';
 
   try {
-    const res = await fetch("http://127.0.0.1:5500/upload", {
+    const res = await fetch("http://127.0.0.1:5000/upload", {
       method: "POST",
       body: formData
     });
 
     const data = await res.json();
 
-    if (res.ok) {
-      mapPanel.innerHTML = `
-        <video width="100%" controls autoplay loop>
-          <source src="${data.video_url}" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
-        <a href="${data.csv_url}" class="download-link" download>
-          <i class="fas fa-download"></i> Download CSV Log
-        </a>
-      `;
-      resultsPanel.innerHTML += `
-        <div class="vessel">
-            <span>Tracking Complete</span><span class="badge done">Done</span>
-        </div>
-      `;
-    } else {
+  if (res.ok) {
+  mapPanel.innerHTML = `
+    <video width="100%" controls autoplay loop>
+      <source src="${data.video_url}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>
+    <a href="${data.csv_url}" class="download-link" download>
+      <i class="fas fa-download"></i> Download CSV Log
+    </a>
+  `;
+
+  // Auto-download processed video
+  const downloadLink = document.createElement("a");
+  downloadLink.href = data.video_url;
+  downloadLink.download = "processed_video.mp4"; // Auto-save name
+  document.body.appendChild(downloadLink);
+  downloadLink.click();
+  document.body.removeChild(downloadLink);
+
+  resultsPanel.innerHTML += `
+    <div class="vessel">
+        <span>Tracking Complete</span><span class="badge done">Done</span>
+    </div>
+  `;
+}
+
+else {
       mapPanel.innerHTML = `<p style="color: #e57373;">Analysis Failed</p>`;
       resultsPanel.innerHTML += `
         <div class="vessel">
