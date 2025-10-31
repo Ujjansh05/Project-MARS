@@ -56,7 +56,7 @@ project-mars/
 
 ### ✅ Prerequisites
 
-- Python 3.8+
+- Python 3.12+
 - pip
 - GPU (optional, for faster inference)
 
