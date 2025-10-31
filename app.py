@@ -1,3 +1,75 @@
+# Backend/app.py
+import os
+import uuid
+from pathlib import Path
+from flask import Flask, jsonify, request, send_from_directory, redirect
+from flask_cors import CORS
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+BACKEND_DIR = Path(__file__).resolve().parent
+FRONTEND_DIR = BASE_DIR / "Frontend"
+UPLOAD_DIR = BACKEND_DIR / "uploads"
+RESULTS_DIR = BACKEND_DIR / "results"
+
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+RESULTS_DIR.mkdir(parents=True, exist_ok=True)
+
+app = Flask(__name__, static_folder=None)
+CORS(app)
+
+@app.route("/")
+def home():
+    return redirect("/project/Frontend/index.html")
+
+@app.route("/project/Frontend/<path:filename>")
+def serve_frontend(filename):
+    return send_from_directory(FRONTEND_DIR, filename)
+
+@app.route("/results/<path:subpath>")
+def serve_results(subpath):
+    return send_from_directory(RESULTS_DIR, subpath, as_attachment=False)
+
+@app.route("/upload", methods=["POST"])
+def upload_and_run():
+    try:
+        if "file" not in request.files:
+            return jsonify({"error": "No file part in request"}), 400
+
+        f = request.files["file"]
+        if f.filename == "":
+            return jsonify({"error": "No selected file"}), 400
+
+        job_id = uuid.uuid4().hex[:8]
+        job_upload_dir = UPLOAD_DIR / job_id
+        job_upload_dir.mkdir(parents=True, exist_ok=True)
+        in_path = job_upload_dir / f.filename
+        f.save(str(in_path))
+
+        job_out_dir = RESULTS_DIR / job_id
+        job_out_dir.mkdir(parents=True, exist_ok=True)
+
+        from tracker_logic import run_tracking_pipeline
+        video_path, csv_path = run_tracking_pipeline(video_path=in_path, output_dir=job_out_dir)
+
+        video_rel = str(Path(video_path).relative_to(RESULTS_DIR)).replace("\\", "/")
+        csv_rel = str(Path(csv_path).relative_to(RESULTS_DIR)).replace("\\", "/")
+
+        # Send JSON so frontend can show + auto-download
+        return jsonify({
+            "ok": True,
+            "job_id": job_id,
+            "video_url": f"/results/{video_rel}",
+            "csv_url": f"/results/{csv_rel}"
+        }), 200
+
+    except Exception as e:
+        print("[/upload] ERROR:", e)
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="127.0.0.1", port=5000, debug=True)
+
+
 # #!/usr/bin/env python3
 # """
 # Step 3: Track vessels across frames or in video using YOLOv8 + ByteTrack
@@ -593,74 +665,4 @@ Step 3: Robust vessel tracking with YOLOv8 + ByteTrack
 # if __name__ == '__main__':
 #     app.run(host='127.0.0.1', port=5000, debug=True)
 
-# Backend/app.py
-import os
-import uuid
-from pathlib import Path
-from flask import Flask, jsonify, request, send_from_directory, redirect
-from flask_cors import CORS
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-BACKEND_DIR = Path(__file__).resolve().parent
-FRONTEND_DIR = BASE_DIR / "Frontend"
-UPLOAD_DIR = BACKEND_DIR / "uploads"
-RESULTS_DIR = BACKEND_DIR / "results"
-
-UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
-RESULTS_DIR.mkdir(parents=True, exist_ok=True)
-
-app = Flask(__name__, static_folder=None)
-CORS(app)
-
-@app.route("/")
-def home():
-    return redirect("/project/Frontend/index.html")
-
-@app.route("/project/Frontend/<path:filename>")
-def serve_frontend(filename):
-    return send_from_directory(FRONTEND_DIR, filename)
-
-@app.route("/results/<path:subpath>")
-def serve_results(subpath):
-    return send_from_directory(RESULTS_DIR, subpath, as_attachment=False)
-
-@app.route("/upload", methods=["POST"])
-def upload_and_run():
-    try:
-        if "file" not in request.files:
-            return jsonify({"error": "No file part in request"}), 400
-
-        f = request.files["file"]
-        if f.filename == "":
-            return jsonify({"error": "No selected file"}), 400
-
-        job_id = uuid.uuid4().hex[:8]
-        job_upload_dir = UPLOAD_DIR / job_id
-        job_upload_dir.mkdir(parents=True, exist_ok=True)
-        in_path = job_upload_dir / f.filename
-        f.save(str(in_path))
-
-        job_out_dir = RESULTS_DIR / job_id
-        job_out_dir.mkdir(parents=True, exist_ok=True)
-
-        from tracker_logic import run_tracking_pipeline
-        video_path, csv_path = run_tracking_pipeline(video_path=in_path, output_dir=job_out_dir)
-
-        video_rel = str(Path(video_path).relative_to(RESULTS_DIR)).replace("\\", "/")
-        csv_rel = str(Path(csv_path).relative_to(RESULTS_DIR)).replace("\\", "/")
-
-        # Send JSON so frontend can show + auto-download
-        return jsonify({
-            "ok": True,
-            "job_id": job_id,
-            "video_url": f"/results/{video_rel}",
-            "csv_url": f"/results/{csv_rel}"
-        }), 200
-
-    except Exception as e:
-        print("[/upload] ERROR:", e)
-        return jsonify({"error": str(e)}), 500
-
-if __name__ == "__main__":
-    app.run(host="127.0.0.1", port=5000, debug=True)
 
